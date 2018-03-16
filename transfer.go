@@ -76,6 +76,17 @@ func ToSortDirect(unique, desc bool) SortDirect {
 	}
 }
 
+func ToSortCompareOperator(unique, desc, next bool) string {
+	sortDirect := ToSortDirect(unique, desc)
+	var operator string
+	if next {
+		operator = sortDirect.Next()
+	} else {
+		operator = sortDirect.Prev()
+	}
+	return operator
+}
+
 // nextTpl needs three parameters: {{.Conds}}, {{.Sorts}}, {{.Limit}}
 func SortQueryByUniqueKey(p *Paging, nextTpl, alias string) string {
 	id := p.IdVal
@@ -84,14 +95,8 @@ func SortQueryByUniqueKey(p *Paging, nextTpl, alias string) string {
 	if id == nil {
 		idCond = "1 = 1"
 	} else {
-		sort := ToSortDirect(true, p.IdDesc)
-        	var direct string
-        	if p.Next {
-                	direct = sort.Next()
-        	} else {
-                	direct = sort.Prev()
-       		 }
-		idCond = idName + direct + " " + PrepareToString(id)
+        	direct := ToSortCompareOperator(true, p.IdDesc, p.Next)
+        	idCond = idName + direct + " " + PrepareToString(id)
 	}
 	
 	desc := "DESC"
@@ -132,14 +137,7 @@ func SortQueryBy(p *Paging, nextTpl, alias string) string {
 	next := p.Next	
 
 	idName := alias + "." + p.Id
-	idSortDirect := ToSortDirect(true, p.IdDesc)
-	var idDirect string
-	if next {
-		idDirect = idSortDirect.Next()
-	} else {
-		idDirect = idSortDirect.Prev()
-	}
-
+	idDirect := ToSortCompareOperator(true, p.IdDesc, next)
 	var idCond string 
 	if id != nil {
 		idCond = idName + " " + idDirect + " " + PrepareToString(id)
@@ -156,7 +154,6 @@ func SortQueryBy(p *Paging, nextTpl, alias string) string {
                         continue
                 }
 
-		sort := ToSortDirect(f.Unique, f.Desc)
 		condName := alias + "." + f.Name + " "
 
 		sortItem := condName
@@ -171,12 +168,8 @@ func SortQueryBy(p *Paging, nextTpl, alias string) string {
 			continue
 		}
 		containsDuplicable = true
-		cond := condName	
-		if next {
-			cond += sort.Next()
-		} else {
-			cond += sort.Prev()
-		}
+		cond := condName
+		cond += ToSortCompareOperator(f.Unique, f.Desc, next)	
 		cond += " "
 		cond += PrepareToString(f.Value)
 		where = append(where, cond)
