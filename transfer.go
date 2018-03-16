@@ -1,18 +1,17 @@
-package sql
+package paging
 
 import (
 	"strings"
 	"strconv"
 	"fmt"
 
-	"github.com/yuanchi/paging/sql/sqlutil"
+	"github.com/yuanchi/paging/util"
 )
 
 /*
 referring to 'https://www.slideshare.net/slideshow/view?login=Eweaver&preview=no&slideid=1&title=efficient-pagination-using-mysql'
 to implement the function of pagination
 */
-
 type Paging struct {
 	Id string
 	IdVal interface{}
@@ -29,7 +28,6 @@ type FieldData struct {
         Desc, Unique bool
 }
 
-
 type SortDirect interface {
 	Next() string
 	Prev() string
@@ -42,39 +40,39 @@ const (
 	le = "<="
 )
 
-type UniDesc struct {}
-type UniAsc struct {}
-type DupDesc struct {}
-type DupAsc struct {}
+type uniDesc struct {}
+type uniAsc struct {}
+type dupDesc struct {}
+type dupAsc struct {}
 
-func (ud *UniDesc) Next() string { return lt }
-func (ud *UniDesc) Prev() string { return gt }
+func (ud *uniDesc) Next() string { return lt }
+func (ud *uniDesc) Prev() string { return gt }
 
-func (ua *UniAsc) Next() string { return gt }
-func (ua *UniAsc) Prev() string { return lt}
+func (ua *uniAsc) Next() string { return gt }
+func (ua *uniAsc) Prev() string { return lt}
 
-func (dd *DupDesc) Next() string { return le }
-func (dd *DupDesc) Prev() string { return ge}
+func (dd *dupDesc) Next() string { return le }
+func (dd *dupDesc) Prev() string { return ge}
 
-func (da *DupAsc) Next() string { return ge }
-func (da *DupAsc) Prev() string { return le }
+func (da *dupAsc) Next() string { return ge }
+func (da *dupAsc) Prev() string { return le }
 
 var (
-	uniDesc = UniDesc{}
-	uniAsc = UniAsc{}
-	dupDesc = DupDesc{}
-	dupAsc = DupAsc{}
+	ud = uniDesc{}
+	ua = uniAsc{}
+	dd = dupDesc{}
+	da = dupAsc{}
 )
  
 func ToSortDirect(unique, desc bool) SortDirect {
 	if unique && desc {
-		return &uniDesc
+		return &ud
 	} else if unique && !desc {
-		return &uniAsc
+		return &ua
 	} else if !unique && desc {
-		return &dupDesc
+		return &dd
 	} else {
-		return &dupAsc
+		return &da
 	}
 }
 
@@ -113,7 +111,7 @@ func PrepareToString(val interface{}) string {
 	var s string
 	switch v := val.(type) {
 		case string:
-			s = sqlutil.PrepareString(v)
+			s = util.PrepareString(v)
 		case int:
 			s = strconv.Itoa(v)
 		default:

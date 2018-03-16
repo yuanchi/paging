@@ -1,4 +1,4 @@
-package randutil
+package util
 
 import (
 	"testing"
